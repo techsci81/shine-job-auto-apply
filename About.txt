@@ -1,0 +1,39 @@
+# Job Application Automation – Shine Portal
+
+## 📌 Overview
+This project automates the process of submitting job applications through the **Shine portal**. It leverages skill‑based workflows inspired by OpenAI’s agent skills framework and is designed to streamline repetitive application tasks.
+
+## 🚀 Current Features
+- Applies automatically to **three job postings** in Shine.
+- Marks applications as submitted once processed.
+- Tested successfully in **Visual Studio**.
+- Integrates with skill creation concepts from [Agent Skills Quickstart](https://agentskills.io/skill-creation/quickstart).
+
+## ⚠️ Limitations
+- **Pop‑up handling not yet implemented** (future iterations will address this).
+- Currently limited to **three applications per run**.
+- Requires manual setup of API keys and environment configuration.
+
+## 🔮 Roadmap
+- Expand support for multiple job postings.
+- Add robust **pop‑up detection and handling**.
+- Improve error handling and logging.
+- Explore integration with **OpenAI Skills API** and **Microsoft Copilot Studio** for enterprise workflows.
+- Package as a reusable skill/plugin for broader adoption.
+
+## 🛠️ Tech Stack
+- **Language:** Python / Batch scripting  
+- **Environment:** Visual Studio  
+- **API References:** OpenAI Skills API, Agent Skills framework  
+
+## 📂 Repository Structure
+```
+shine-job-auto-apply/
+│── README.md        # Project documentation
+│── scripts/         # Automation scripts
+│── config/          # Environment and API setup
+│── logs/            # Execution logs
+```
+
+## 🤝 Contribution
+Contributions are welcome! Please fork the repository, submit pull requests, or open issues for feature requests and bug reports.
