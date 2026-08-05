@@ -29,10 +29,12 @@ This project automates the process of submitting job applications through the **
 ## 📂 Repository Structure
 ```
 shine-job-auto-apply/
-│── README.md        # Project documentation
-│── scripts/         # Automation scripts
-│── config/          # Environment and API setup
-│── logs/            # Execution logs
+│── SKILLS.md                    # Project documentation
+│── scripts/                     # Automation scripts
+│── config/                      # Environment and API setup
+│── additional files/            # Execution logs
+│── references/                  # Execution logs
+│── assets/                      # 
 ```
 
 ## 🤝 Contribution
