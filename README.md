@@ -1,0 +1,1 @@
+# shine-job-auto-apply
