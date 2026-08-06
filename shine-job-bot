@@ -1,0 +1,260 @@
+#   --- This script is used to apply for jobs.
+#   --- logging into Shine.com
+#   --- dashboard
+#   --- navigating to the job alerts page       def navigate_to_job_alerts(driver)
+#   --- create a list named alert title list[]  def extract_alert_cards(driver,driver.page_source)
+#   --- extracting the job alerts USE:          def extract_alert_cards(driver, driver.page_source)
+#   --- opening the first alert cards           def click_view_jobs_buttons(driver, alert_title_list[0:1],timeout=10)
+#   --- extracting the job cards from the first alert card  def parse_all_job_cards(driver, output_file="shine_jobs_alert.csv")
+#       --- extracting the pagination links from the first alert card  def extract_pagination_links(driver)
+#   --- apply.
+#   --- Finally logging out.
+#   --- Run Command for Python  
+#   --- python \Path\filename\shine-search-save-1.py
+import csv
+import subprocess
+import sys
+import time
+from datetime import datetime
+import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from tested_login_logout import init_driver, login_shine, logout_shine
+#from tested_login_search_save_all_page import (    extract_pagination_links,parse_all_job_cards,    parse_job_cards,)
+# ---------------------------
+# CONFIGURATION
+# ---------------------------
+USERNAME = "example@outlook.com"   # Line 44 username
+PASSWORD = "@@@$%!!$" # Line 50 password
+# --- Setup Edge driver ---
+def init_driver():
+    options = webdriver.EdgeOptions()
+    options.add_experimental_option("detach", True)
+    driver = webdriver.Edge(options=options)
+    driver.maximize_window()
+    return driver
+
+### TESTED Navigate to the JOB ALERTS page ---
+
+def navigate_job_alerts(driver):
+    try:
+        job_alert_link = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href="https://www.shine.com/myshine/alerts"]'))
+)
+        job_alert_link.click()
+        print("Clicked 'Job Alerts' link successfully.")
+    except Exception as e:
+        print("Could not find or click the button:", e)
+
+### TESTED Navigate to the job alerts page
+
+###     TESTED extract_alertcards
+##  <div class="jobCardNova_bigCard__W2xn3 jdbigCard" itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem"><div></div><div class="jobCardNova_bigCardTop__3y5nO d-flex justify-content-between align-items-start jdbigCardTop"><meta itemprop="url" content="https://www.shine.com/jobs/undefined"><meta itemprop="position" content="1"><div class="jobCardNova_bigCardTopTitle__vLLav jdBigCardTopTitle"><h3 itemprop="name" title="Artificial Intelligence,  Machine Learning" class="jobCardNova_bigCardTopTitleHeading__Rj2sC jdTruncation"><span>Artificial Intelligence,  Machine Learning</span></h3><span class="jobCardNova_bigCardTopTitleName__M_W_m jdTruncationCompany"></span></div></div><div class="jobCardNova_bigCardCenter__uVExC"><div class="jobCardNova_bigCardCenterList__GcAWv d-flex justify-content-start align-items-center"></div></div><div class="jobCardNova_jfyJobAlertActions__3q0uZ"><button class="jobCardNova_jfyViewJobsBtn__yK6rp nova_btn nova_btn-secondary">View Jobs</button></div></div>
+def extract_alertcards(driver, driver_page_source):    
+    soup = BeautifulSoup(driver_page_source, "html.parser")
+    # Find all h3 elements with itemprop="name" and a title attribute
+    alert_divs = soup.find_all(
+    "h3",
+    attrs={"itemprop": "name"},
+    title=True
+    )
+    alert_title_list = []
+    for h3 in alert_divs:
+        alert_title_list.append(h3.get("title"))      # from the title attribute
+        alert_body_text = h3.get_text(strip=True)  # visible text inside <span>
+        #print(alert_body_text)
+        #print(alert_title_list[-1])  # print the last added title
+    print(f"Total number of alerts: {len(alert_title_list)}")
+    return alert_title_list
+###     TESTED extract_alertcards
+
+#### Tested click_view_jobs_buttons IN THE JOB ALERTS PAGE SET BY THE USER
+def click_view_jobs_buttons(driver, alert_title_list, timeout=10):
+    """
+    Reusable function to click 'View Jobs' buttons for all alerts in the list.
+    
+    Args:
+        driver: Selenium WebDriver instance
+        alert_title_list: list of alert titles (strings)
+        timeout: max wait time for locating elements
+    """
+    
+    for alert_title in alert_title_list[0:1]:  # Click only the first alert
+        try:
+            # Locate the alert card by its <h3> title
+            alert_card = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, f"//h3[@title='{alert_title}']")
+                )
+            )
+            # From the card, navigate up to parent container and find the button
+            view_jobs_button = alert_card.find_element(
+                By.XPATH,
+                "./ancestor::div[contains(@class,'jobCardNova_bigCard__W2xn3')]"
+                "//button[contains(@class,'jobCardNova_jfyViewJobsBtn')]"
+            )
+            view_jobs_button.click()
+            print(f"Clicked 'View Jobs' for alert: {alert_title}")
+
+        except Exception as e:
+            print(f"Could not click 'View Jobs' for '{alert_title}': {e}")
+####    TESTED click_view_jobs_buttons IN THE JOB ALERTS PAGE SET BY THE USER
+
+####    CODE BLOCK
+###     TESTing extract_alert_result_card
+###     XPATH:  
+def extract_alert_result_cards(driver, url):
+    driver.get(url)
+    time.sleep(2)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    alert_divs = soup.find_all("div", attrs={"data-card-index": True})
+    result_divs = []
+    for idx, alert_div in enumerate(alert_divs, start=1):
+        alert_body_text = alert_div.get_text(strip=True)
+        alert_title = alert_div.get("data-card-index")
+        alert_link_tag = alert_div.find("a", href=True)
+        alert_link = alert_link_tag["href"] if alert_link_tag else None
+        result_divs.append([idx, alert_title, alert_body_text, alert_link])
+    return result_divs
+
+###     TESTing extract_alert_result_list
+### extract_pagination_link
+def extract_pagination_links(driver):
+    base_url = driver.current_url
+    pagination_items = driver.find_elements(By.XPATH, "//ul[contains(@class,'paginationNova')]//li")
+
+    print(f"Found {len(pagination_items)} pagination items.")
+
+    # Extract numeric page values
+    page_numbers = []
+    for item in pagination_items:
+        text = item.text.strip()
+        if text.isdigit():
+            page_numbers.append(int(text))
+
+    max_page = max(page_numbers) if page_numbers else 1
+    print(f"Detected max page: {max_page}")
+
+    # Build all pagination links from 1 to max_page
+    hrefs = []
+    for i in range(1, max_page + 1):
+        if i == 1:
+            hrefs.append(base_url)
+        else:
+            hrefs.append(f"{base_url}-{i}")
+
+    return hrefs
+
+### extract_pagination_link
+### EXTRACT ALL ALERT RESULT CARDS TOTAL PAGES
+def parse_all_job_cards(driver, output_file='shine_jobs.csv'):
+    hrefs = extract_pagination_links(driver)
+    all_results = []
+    p = 3  # number of pages to scrape
+    for h in hrefs[:p]:  # limit to first p pages
+        all_results.extend(extract_alert_result_cards(driver, h))
+
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["CardIndex", "Title", "Text", "Link"])
+        writer.writerows(all_results)
+        print(f"Job cards up to page {p} saved to {output_file}")
+
+    return all_results
+
+### EXTRACT ALL ALERT RESULT CARDS TOTAL PAGES
+####CODE BLOCK
+def joblink_apply_button(driver, timeout=10):
+    """Click the Apply button using class-based selectors (no ID)."""
+    try:
+        apply_button = WebDriverWait(driver, timeout).until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//button[contains(text(),'Apply') or contains(@id, 'id_apply_')]")
+            )
+        )
+        apply_button.click()
+        print("Clicked Apply button.")
+        return True
+    except Exception as e:
+        print(f"Could not click Apply button: {e}")
+        return False
+
+
+def write_application_report(report_rows, output_file="shine_applied_jobs_report.csv"):
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "job_title", "status", "url", "notes"])
+        writer.writerows(report_rows)
+    print(f"Application report saved to {output_file}")
+    return output_file
+
+####
+##  third job apply 
+def apply20jobs(driver, job_rows, report_file="shine_applied_jobs_report.csv"):
+    report_rows = []
+    for row in job_rows: # replace --> for row in job_rows[:n] to limit with first n jobs posted
+        card_index, title, text, link = row
+        if not link:
+            continue
+
+        try:
+            driver.execute_script("window.open('');")
+            driver.switch_to.window(driver.window_handles[-1])
+            driver.get(link)
+            time.sleep(4)
+            actions = ActionChains(driver)
+            actions.send_keys(Keys.END).perform()
+            time.sleep(4)
+            applied = joblink_apply_button(driver)
+            status = "applied" if applied else "not_applied"
+            notes = "Apply button clicked" if applied else "Apply button not found or not clickable"
+        except Exception as exc:
+            status = "error"
+            notes = str(exc)
+        finally:
+            if len(driver.window_handles) > 1:
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
+
+        report_rows.append([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            text or title or "Unknown job",
+            status,
+            link,
+            notes,
+        ])
+
+    return write_application_report(report_rows, output_file=report_file)
+
+####
+# ---------------------------
+# MAIN EXECUTION
+# ---------------------------
+if __name__ == "__main__":
+    driver = init_driver()
+    login_shine(driver, USERNAME, PASSWORD)
+    navigate_job_alerts(driver)
+    alert_title_list = extract_alertcards(driver, driver.page_source)
+    #print(alert_title_list)
+    #for index, alert_title in enumerate(alert_title_list):
+    #    print(f"Alert {index + 1}: {alert_title}")
+    click_view_jobs_buttons(driver, alert_title_list[0:1])
+    time.sleep(3)
+    job_rows = parse_all_job_cards(driver, output_file="shine_jobs_alert.csv")
+    report_file = apply20jobs(driver, job_rows)
+    print(f"Completed workflow. Report: {report_file}")
+    #print(job_alerts)
+    #alert_result_list =[]
+    #alert_result_list= parse_job_cards(driver, driver.page_source)
+    #apply_job(driver, alert_result_list[0:1], timeout=10)
+    #logout_shine(driver)
+    #print("Logged out")
+    #print("Browser is kept open. Enter to close it.")
+    #input()
+    #driver.quit()
+  
